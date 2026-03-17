@@ -1010,8 +1010,10 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.receiverName),
-        backgroundColor: Colors.teal,
+        title: Text(widget.receiverName,
+                   style: TextStyle(color:Colors.green)),
+        backgroundColor: Colors.white,
+        shadowColor: Colors.grey,
         actions: [
           Icon(_aesKeyBytes != null ? Icons.lock : Icons.lock_open, size: 18),
           const SizedBox(width: 15),
@@ -1058,20 +1060,22 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
                     padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
                     child: Row(
                       children: [
-                        IconButton(
-                            icon: Icon(Icons.attach_file), onPressed: pickFile),
                         Expanded(
                           child: TextField(
                             controller: _messageController,
                             maxLines: null,
                             decoration: InputDecoration(
+                              prefixIcon: IconButton(icon: Icon(Icons.attach_file,
+                                                               color: Colors.grey),
+                                                    onPressed: pickFile,
+                                                    iconSize: 14),
                               filled: true,
                               hintText: "Message Encrypted ...",
                               contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(25),
-                                borderSide: BorderSide.none,
+                                borderSide: BorderSide(width:2, color: Colors.black),
                               ),
                             ),
                           ),
