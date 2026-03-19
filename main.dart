@@ -733,7 +733,6 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
   String? _selectedRisk;
   bool _isProcessingFile = false;
 
-
   @override
   void initState() {
     super.initState();
@@ -821,7 +820,7 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
     final result = await FilePicker.platform.pickFiles();
 
     if (result != null) {
-      setState((){
+      setState(() {
         _isProcessingFile = true;
       });
 
@@ -836,7 +835,7 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
         classification: classification,
       );
 
-      setState((){
+      setState(() {
         _selectedFile = file;
         _selectedRisk = classification.riskLevel.name;
         _isProcessingFile = false;
@@ -1022,35 +1021,35 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
         backgroundColor: Colors.blue));
   }
 
-  Widget _buildAttachmentPreview(){
-    if(_isProcessingFile){
+  Widget _buildAttachmentPreview() {
+    if (_isProcessingFile) {
       return Padding(
         padding: const EdgeInsets.all(8),
         child: Row(
-          children: const[
+          children: const [
             CircularProgressIndicator(),
-            SizedBox(width:10),
+            SizedBox(width: 10),
             Text("Analyzing and Neutralizing"),
           ],
         ),
       );
     }
 
-    if(_selectedFile == null) return const SizedBox();
+    if (_selectedFile == null) return const SizedBox();
 
     Color borderColor;
-    switch(_selectedRisk){
-      case "High":
-      borderColor = Colors.red;
-      break;
+    switch (_selectedRisk) {
+      case "high":
+        borderColor = Colors.red;
+        break;
 
       case "medium":
-      borderColor = Colors.orange;
-      break;
+        borderColor = Colors.orange;
+        break;
 
       default:
-      borderColor = Colors.green;
-      break;
+        borderColor = Colors.green;
+        break;
     }
 
     return Container(
@@ -1058,39 +1057,56 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: borderColor, width:2),
+        border: Border.all(color: borderColor, width: 2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           const Icon(Icons.insert_drive_file),
-          const SizedBox(width:10),
-
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(_selectedFile!.name),
-                Text("Risk: ${_selectedRisk?.toUpperCase()}",
-                style: TextStyle(color: borderColor),
+                Text(
+                  "Risk: ${_selectedRisk?.toUpperCase()}",
+                  style: TextStyle(color: borderColor),
                 ),
               ],
             ),
           ),
-          IconButton(icon: const Icon(Icons.close),
-          onPressed: (){
-            setState((){
-              _selectedFile = null;
-              _selectedRisk = null;
-            });
-          },
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              setState(() {
+                _selectedFile = null;
+                _selectedRisk = null;
+              });
+            },
           ),
-
-          IconButton(icon: const Icon(Icons.send),
-          onPressed: pickFile),
+          IconButton(icon: const Icon(Icons.send), onPressed: sendAttachment),
         ],
       ),
     );
+  }
+
+  Future<void> sendAttachment() async {
+    if (_selectedFile == null || _aesKey == null) return;
+
+    await FirebaseFirestore.instance
+        .collection('chat_rooms')
+        .doc(chatRoomId)
+        .collection('messages')
+        .add({
+      "senderId": FirebaseAuth.instance.currentUser!.uid,
+      "receiverId": widget.receiverUid,
+      "type": "attachment",
+      "fileName": _selectedFile!.name,
+      "riskLevel": _selectedRisk ?? "low",
+      "neutralized": true,
+      "timestamp": FieldValue.serverTimestamp(),
+    });
   }
 
   @override
