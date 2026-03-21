@@ -79,7 +79,7 @@ class KnotApp extends StatelessWidget {
             brightness: Brightness.light,
           ),
         ),
-        home: const AuthWrapper());
+        home: const SplashScreen());
   }
 }
 
@@ -373,6 +373,33 @@ class _SplashScreenState extends State<SplashScreen>{
         MaterialPageRoute(builder: (_) => const AuthWrapper()),
       );
     });
+  }
+
+  @override
+  Widget build(BuildContext context){
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFFF6F0),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children:[
+            Image.asset(
+              'assets/main_icon.png',
+              width:100,
+            ),
+            const SizedBox(height:20),
+            const Text(
+              "Knot",
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.teal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
