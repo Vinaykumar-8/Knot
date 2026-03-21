@@ -1069,15 +1069,20 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
         backgroundColor: Colors.blue));
   }
 
-  Widget _buildAttachmentPreview() {
+  Widget _buildCenteredPreview() {
     if (_isProcessingFile) {
-      return Padding(
-        padding: const EdgeInsets.all(8),
-        child: Row(
-          children: const [
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             CircularProgressIndicator(),
-            SizedBox(width: 10),
-            Text("Analyzing and Neutralizing"),
+            SizedBox(height: 10),
+            Text("Analyzing & Neutralizing..."),
           ],
         ),
       );
@@ -1086,59 +1091,81 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
     if (_selectedFile == null) return const SizedBox();
 
     Color borderColor;
+
     switch (_selectedRisk) {
       case "high":
         borderColor = Colors.red;
         break;
-
       case "medium":
         borderColor = Colors.orange;
         break;
-
       default:
         borderColor = Colors.green;
-        break;
     }
 
     return Container(
-      margin: const EdgeInsets.all(8),
-      padding: const EdgeInsets.all(10),
+      width: 300,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: borderColor, width: 2),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+          )
+        ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.insert_drive_file),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_selectedFile!.name),
-                Text(
-                  "Risk: ${_selectedRisk?.toUpperCase()}",
-                  style: TextStyle(color: borderColor),
+          const Icon(Icons.insert_drive_file, size: 40),
+          const SizedBox(height: 10),
+          Text(
+            _selectedFile!.name,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Risk: ${_selectedRisk?.toUpperCase()}",
+            style: TextStyle(color: borderColor),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _selectedFile = null;
+                    _selectedRisk = null;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey,
                 ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () {
-              setState(() {
-                _selectedFile = null;
-                _selectedRisk = null;
-              });
-            },
-          ),
-          IconButton(icon: const Icon(Icons.send), onPressed: sendAttachment),
+                child: const Text("Cancel",
+                style: TextStyle(color: Colors.white),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: sendAttachment,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: borderColor,
+                ),
+                child: const Text("Send",
+                style: TextStyle(color:Colors.white),
+                ),
+              ),
+            ],
+          )
         ],
       ),
     );
   }
-
+  
   Future<void> sendAttachment() async {
     if (_selectedFile == null || _aesKey == null) return;
 
