@@ -22,7 +22,7 @@ class CngContainerBuilder {
         classification.category == FileCategory.archive) {
       payload = base64Encode(fileByte);
     } else {
-      payload = utf8.decode(fileBytes, allowMalformed: true);
+      payload = base64Encode(fileBytes);
     }
 
     return '''
