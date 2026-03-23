@@ -13,6 +13,8 @@ import 'cng_models.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1093,6 +1095,26 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
     } else {
       bytes = base64Decode(payload);
     }
+
+    var status = await Permission.storage.request();
+    if(!status.isGranted){
+      throw Exception("Storage permission required");
+    }
+    Directory? directory;
+
+    if(Platform.isAndroid){
+      directory = Directory('/storage/emulated/0/Download');
+    }
+    else{
+      directory = await getApplicationDocumentsDirectory();
+    }
+
+    final filePath = "${directory.path}/$fileName";
+    final file = File(filePath);
+
+    await file.writeAsBytes(bytes);
+
+    print("File saved at: $filePath.");
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Payload extracted")),
