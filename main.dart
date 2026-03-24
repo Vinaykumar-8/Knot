@@ -13,8 +13,6 @@ import 'cng_models.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1059,83 +1057,61 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
   }
 
   Future<void> downloadAttachment(Map<String, dynamic> data) async {
+    try {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Download started")));
 
-    try{
+      if (_aesKey == null) {
+        throw "Encryption key not ready";
+      }
+
+      final encryptedContainer = data['payload'];
+      final fileName = data['fileName'];
+
+      print("Download button pressed");
+
+      final decryptedContainer =
+          await EncryptionService.decryptMessage(encryptedContainer, _aesKey!);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Download started"))
+        const SnackBar(content: Text("Decryption successful")),
       );
-    
-    if(_aesKey == null){
-      throw "Encryption key not ready";
-    }
-    
-    final encryptedContainer = data['payload'];
-    final fileName = data['fileName'];
 
-    print("Download button pressed");
+      final payload = decryptedContainer
+          .split("-----CNG-PAYLOAD-START-----")[1]
+          .split("-----CNG-PAYLOAD-END-----")[0]
+          .trim();
 
-    final decryptedContainer =
-        await EncryptionService.decryptMessage(encryptedContainer, _aesKey!);
+      print("Downloading file: $fileName");
+      print("Category: ${data['category']}");
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Decryption successful")),
-    );
+      final bytes;
+      if (data['category'] == "programming") {
+        bytes = utf8.encode(payload);
+      } else {
+        bytes = base64Decode(payload);
+      }
 
-    final payload = decryptedContainer
-        .split("-----CNG-PAYLOAD-START-----")[1]
-        .split("-----CNG-PAYLOAD-END-----")[0]
-        .trim();
-
-    print("Downloading file: $fileName");
-    print("Category: ${data['category']}");
-
-    final bytes;
-    if (data['category'] == "programming") {
-      bytes = utf8.encode(payload);
-    } else {
-      bytes = base64Decode(payload);
-    }
-
-    var status = await Permission.storage.request();
-    if(!status.isGranted){
-      throw Exception("Storage permission required");
-    }
-    Directory? directory;
-
-    if(Platform.isAndroid){
-      directory = Directory('/storage/emulated/0/Download');
-    }
-    else{
-      directory = await getApplicationDocumentsDirectory();
-    }
-
-    final filePath = "${directory.path}/$fileName";
-    final file = File(filePath);
-
-    await file.writeAsBytes(bytes);
-
-    print("File saved at: $filePath.");
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Payload extracted")),
-    );
-
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File("${directory.path}/$fileName");
-
-    await file.writeAsBytes(bytes);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-          "File Downloaded Successfully",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.blue));
-    }
-    catch(e){
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Download failed: $e"),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
+        SnackBar(content: Text("Payload extracted")),
+      );
+
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File("${directory.path}/$fileName");
+
+      await file.writeAsBytes(bytes);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            "File Downloaded Successfully",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: Colors.blue));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Download failed: $e"),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
         ),
       );
     }
