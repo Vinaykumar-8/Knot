@@ -1366,7 +1366,10 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
           const SizedBox(width: 15),
         ],
       ),
-      body: Container(
+      body: 
+      Stack(
+        children:[
+          Container(
         color: const Color(0xFFFFF6F0),
         child: _aesKeyBytes == null
             ? const Center(
@@ -1461,6 +1464,10 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
                 ],
               ),
       ),
+          ],
+        if(_selectedFile !=null || _isProcessingFile)
+        _buildPreviewOverlay(),
+        ),
     );
   }
 }
