@@ -13,6 +13,7 @@ import 'cng_models.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'dart:ui';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1328,6 +1329,28 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
       _selectedRisk = null;
       _isProcessingFile = false;
     });
+  }
+
+  Widget _buildPreviewOverlay(){
+    return Positioned.fill(
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 250),
+        opacity:1,
+        child: Stack(
+          children:[
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX:8, sigmaY: 8),
+              child: Container(
+                color: Colors.black.withOpacity(0.3),
+              ),
+            ),
+            Center(
+              child: _buildCenteredPreview(),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
