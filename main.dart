@@ -889,7 +889,9 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
   }
 
   Future<void> pickFile() async {
-    final result = await FilePicker.platform.pickFiles();
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+    );
 
     if (result != null) {
       setState(() {
