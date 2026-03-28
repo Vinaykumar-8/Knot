@@ -1165,6 +1165,10 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
         const SnackBar(content: Text("Decryption successful")),
       );
 
+      if(!decryptedContainer.contains('CNG-CONTAINER')){
+        throw "Invalid container format";
+      }
+      
       final payload = decryptedContainer
           .split("-----CNG-PAYLOAD-START-----")[1]
           .split("-----CNG-PAYLOAD-END-----")[0]
@@ -1390,7 +1394,8 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
     });
 
     final file = _selectedFile!;
-    final fileName = file.name;
+    final newName = file.name;
+    final fileName = newName.replaceAll(RegExp(r'[^w\.\-]'), '_');
     final bytes = file.bytes ?? await File(file.path!).readAsBytes();
 
     final classification = FileClassifier.classify(fileName);
@@ -1401,6 +1406,10 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
       classification: classification,
     );
 
+    if(file.size>10*1024*1024){
+      throw "File size is too large";
+    }
+    
     final encryptedContainer =
         await EncryptionService.encryptMessage(container, _aesKey!);
 
