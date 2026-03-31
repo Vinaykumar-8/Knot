@@ -12,6 +12,7 @@ import 'cng_container_builder.dart';
 import 'cng_models.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:ui';
 
@@ -1213,6 +1214,21 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
         SnackBar(content: Text("Payload extracted")),
       );
 
+      final mimeType = lookupMimeType(fileName, headerBytes: bytes);
+      if(mimeType == null || !mimeType.startsWith("\image")){
+        throw "Invalid mime Type";
+        setState((){
+          _isProcessingFile = false;
+        })
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("The file is found to be malicious and cannot be neutralized, hence Restricted to access"),
+            backgroundColor: Colors.red.shade700,
+            duration: Duration(milliseconds:500),
+          );
+        ),
+      }
+      
       final directory = await getApplicationDocumentsDirectory();
       final file = File("${directory.path}/$fileName");
 
