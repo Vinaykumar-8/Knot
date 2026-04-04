@@ -16,6 +16,7 @@ import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1698,7 +1699,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   bool _isProcessing = false;
 
-  Future<void> _acceptRequest(String fromUid, String? fromName) async {
+  Future<void> (String fromUid, String? fromName) async {
     setState(() {
       _isProcessing = true;
     });
@@ -1707,6 +1708,12 @@ class _ConversationScreenState extends State<ConversationScreen> {
     const String statusConnected = 'connected';
     final myUid = FirebaseAuth.instance.currentUser!.uid;
     try {
+      final receiverDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(myUid);
+
+      final receiverDocSnapshot = await receiverDoc.get();
+      
       final senderDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(fromUid)
@@ -1730,6 +1737,10 @@ class _ConversationScreenState extends State<ConversationScreen> {
         'peerPublicKey': senderPublicKey,
       }, SetOptions(merge: true));
 
+      if(receiverDocSnapshot.exists()){
+        final receiverData = receiverDocSnapshot.data();
+        if(!receiverData == null || !receiverData.isEmpty()){
+          try{
       await FirebaseFirestore.instance
           .collection('users')
           .doc(fromUid)
@@ -1742,6 +1753,12 @@ class _ConversationScreenState extends State<ConversationScreen> {
       }, SetOptions(merge: true));
 
       success = true;
+      }
+        }
+      }
+      catch(e){
+        print("Error raised while updating the firebase doc");
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
