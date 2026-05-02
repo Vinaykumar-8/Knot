@@ -124,6 +124,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _keyform = GlobalKey<FormState>();
   bool _isLoading = false;
 
+  bool _isShow = false;
+
   Future<void> _checkState() async {
     final formState = _keyform.currentState;
     if (formState == null || !formState.validate()) return;
@@ -289,18 +291,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 const SizedBox(height: 15),
                                 TextFormField(
                                   controller: _controller_three,
-                                  obscureText: true,
+                                  obscureText: _isShow ? false : true,
                                   decoration: InputDecoration(
-                                    filled: true,
-                                    prefixIcon: const Icon(
-                                      Icons.key,
-                                      color: Color(0xffea6636),
-                                    ),
-                                    labelText: "Set Your Password",
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                  ),
+                                      filled: true,
+                                      prefixIcon: const Icon(
+                                        Icons.key,
+                                        color: Color(0xffea6636),
+                                      ),
+                                      labelText: "Set Your Password",
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      suffixIcon: IconButton(
+                                          icon: Icon(_isShow
+                                              ? Icons.visibility
+                                              : Icons.visibility_off),
+                                          color: _isShow
+                                              ? Colors.teal
+                                              : Colors.grey,
+                                          onPressed: () {
+                                            setState(() {
+                                              _isShow = !_isShow;
+                                            });
+                                          })),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return "Kindly Fill All The Details.";
@@ -422,6 +435,8 @@ class _LoginPageState extends State<LoginPage> {
   final _keyform = GlobalKey<FormState>();
   bool _isloading = false;
 
+  bool _isShow = false;
+
   Future<void> _updateRoute() async {
     if (!_keyform.currentState!.validate()) {
       return;
@@ -440,15 +455,16 @@ class _LoginPageState extends State<LoginPage> {
       await _initCryptoIdentity();
 
       if (!mounted) return;
+
+      setState(() {
+        _isloading = false;
+      });
+
       Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => ContentPage(),
           ));
-
-      setState(() {
-        _isloading = false;
-      });
     } on FirebaseAuthException catch (e) {
       String message = "An error occurred";
       if (e.code == 'user-not-found')
@@ -550,7 +566,7 @@ class _LoginPageState extends State<LoginPage> {
                                 const SizedBox(height: 15),
                                 TextFormField(
                                   controller: _passwordController,
-                                  obscureText: true,
+                                  obscureText: _isShow ? false : true,
                                   decoration: InputDecoration(
                                     filled: true,
                                     prefixIcon: const Icon(
@@ -561,6 +577,17 @@ class _LoginPageState extends State<LoginPage> {
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(14),
                                     ),
+                                    suffixIcon: IconButton(
+                                        icon: Icon(_isShow
+                                            ? Icons.visibility
+                                            : Icons.visibility_off),
+                                        color:
+                                            _isShow ? Colors.teal : Colors.grey,
+                                        onPressed: () {
+                                          setState(() {
+                                            _isShow = !_isShow;
+                                          });
+                                        }),
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -810,7 +837,7 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
   bool _isProcessingFile = false;
 
   late Future<Directory> directoryFuture;
-  
+
   @override
   void initState() {
     super.initState();
@@ -903,37 +930,36 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
         _isProcessingFile = true;
       });
 
-      try{
-      final file = result.files.first;
-      final fileName = file.name;
-      final bytes = file.bytes ?? await File(file.path!).readAsBytes();
+      try {
+        final file = result.files.first;
+        final fileName = file.name;
+        final bytes = file.bytes ?? await File(file.path!).readAsBytes();
 
-      final classification = FileClassifier.classify(fileName);
-      final container = CngContainerBuilder.buildContainer(
-        originalFileName: fileName,
-        fileBytes: bytes,
-        classification: classification,
-      );
+        final classification = FileClassifier.classify(fileName);
+        final container = CngContainerBuilder.buildContainer(
+          originalFileName: fileName,
+          fileBytes: bytes,
+          classification: classification,
+        );
 
-      setState(() {
-        _selectedFile = file;
-        _selectedRisk = classification.riskLevel.name;
-      });
-      }
-      catch(e){
-        print("File processing error $e");
+        setState(() {
+          _selectedFile = file;
+          _selectedRisk = classification.riskLevel.name;
+        });
+      } catch (e) {
+        print("File processing error: $e");
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Unsupported unsafe file"),
-                         backgroundColor: Colors.red,
+          const SnackBar(
+            content: Text("Unsupported unsafe File"),
+            backgroundColor: Colors.red,
+          ),
         );
-      }
-      finally{
-        setState((){
+      } finally {
+        setState(() {
           _isProcessingFile = false;
         });
       }
-          
       /*final encryptedContainer =
           await EncryptionService.encryptMessage(container, _aesKey!);
 
@@ -959,7 +985,7 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
     if (data['type'] == 'attachment') {
-      return _buildAttachmentBubble(data,doc.id);
+      return _buildAttachmentBubble(data, doc.id);
     }
     bool isMe = data['senderId'] == FirebaseAuth.instance.currentUser!.uid;
 
@@ -1013,50 +1039,49 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
     );
   }
 
-  void _openFullImage(File file){
+  void _openFullImage(File file) {
     showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder:(_){
-        return GestureDetector(
-          onTap: ()=> Navigator.pop(context),
-          child: Stack(
-            children:[
-              BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX:10, sigmaY:10),
-                child: Container(
-                  color:Colors.black.withOpacity(0.6),
+        context: context,
+        barrierDismissible: true,
+        builder: (_) {
+          return GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Stack(
+              children: [
+                BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    color: Colors.black.withOpacity(0.6),
+                  ),
                 ),
-              ),
-              Center(
-                child: Hero(
-                  tag: file.path,
-                  child: InteractiveViewer(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.file(file),
+                Center(
+                  child: Hero(
+                    tag: file.path,
+                    child: InteractiveViewer(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.file(file),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+              ],
+            ),
+          );
+        });
   }
 
-  bool _isImage(String fileName){
-      final ext = fileName.split('.').last.toLowerCase();
-      return ['jpg','jpeg','png'].contains(ext);
+  bool _isImage(String fileName) {
+    final ext = fileName.split('.').last.toLowerCase();
+    return ['jpg', 'jpeg', 'png'].contains(ext);
   }
-  
+
   Widget _buildAttachmentBubble(Map<String, dynamic> data, String messageId) {
     bool isMe = data['senderId'] == _auth.currentUser!.uid;
     Color bgColor;
     Color borderColor;
     Color riskColor = Colors.teal;
-    String currentRisk = data['riskLevel'];
+    String currentRisk = data['riskLevel'] ?? "low";
 
     if (data['neutralized'] == true) {
       if (currentRisk == 'high') {
@@ -1081,6 +1106,7 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
         bgColor = Colors.green.shade50;
         borderColor = Colors.green.shade700;
     }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Align(
@@ -1104,57 +1130,87 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
             crossAxisAlignment:
                 isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
-              if(_isImage(data['fileName']))
-              FutureBuilder(
-                future: directoryFuture,
-                builder: (context, snapshot){
-                  if(!snapshot.hasData) return const SizedBox();
+              if ((_isImage(data['fileName']) &&
+                  (isMe || data['downloaded'] == true)))
+                FutureBuilder(
+                  future: directoryFuture,
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const SizedBox();
 
-                  final directory = snapshot.data!;
-                  final filePath = "${directory.path}/${data['fileName']}";
-                  final file = File(filePath);
+                    final directory = snapshot.data!;
+                    final filePath = "${directory.path}/${data['fileName']}";
+                    final file = File(filePath);
 
-                  if(!file.existsSync()) return const SizedBox();
-        
-                  return Column(
-                    children:[
-                              GestureDetector(
-                                onTap: (){
-                                  _openFullImage(file);
-                                },
-                                child: Hero(
-                                  tag: file.path,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.file(
-                                      file,
-                                      height: 150,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
+                    final thumbPath = file.path.replaceAllMapped(
+                      RegExp(r'\.\w+$'),
+                      (match) => '_thumb.png',
+                    );
+
+                    final thumbFile = File(thumbPath);
+                    final displayFile =
+                        thumbFile.existsSync() ? thumbFile : file;
+
+                    if (!displayFile.existsSync()) {
+                      return const Text("Image not available");
+                    }
+
+                    return Column(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            _openFullImage(file);
+                          },
+                          child: Hero(
+                            tag: file.path,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(
+                                displayFile,
+                                height: 150,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                cacheWidth: 300,
                               ),
-                              const SizedBox(height: 6),
-                            ],
-                          );
-                        },
-                      ),
-              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                      ],
+                    );
+                  },
+                ),
               Text("📎${data['fileName']}"),
               const SizedBox(height: 4),
               Text(
-                "Risk:${data['riskLevel'].toUpperCase()}",
+                "Risk:${currentRisk.toUpperCase()}",
                 style:
                     TextStyle(color: borderColor, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               Text(data['neutralized'] ? "Neutralized" : "Not Neutralized"),
               const SizedBox(height: 6),
-              ElevatedButton(
-                onPressed: () => downloadAttachment(data,messageId),
-                child: const Text("Download"),
-              ),
+              if (!isMe && data['downloaded'] != true)
+                ElevatedButton(
+                  onPressed: () => downloadAttachment(data, messageId),
+                  child: const Text("Download"),
+                ),
+              if (!isMe && data['downloaded'] == true)
+                ElevatedButton(
+                  onPressed: () async {
+                    final directory = await directoryFuture;
+                    final filePath = "${directory.path}/${data['fileName']}";
+                    final file = File(filePath);
+
+                    if (file.existsSync()) {
+                      _openFullImage(file);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("File not found locally")),
+                      );
+                    }
+                  },
+                  child: const Text("View"),
+                ),
             ],
           ),
         ),
@@ -1182,31 +1238,35 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
     );
 
     final thumbFile = File(thumbPath);
-    await thumbFile.writeAsBytes(thumbBytes);
+    if (!thumbFile.existsSync()) {
+      await thumbFile.writeAsBytes(thumbBytes);
+    }
 
     return thumbFile;
   }
 
-  bool _isValidImage(List<int> bytes){
-    if(bytes.length< 4) return false;
-    if(bytes[0]==0xFF && bytes[1]==0xDB) return true
-      if(bytes[0]==0x89 &&
-         bytes[1]==0x50 &&
-         bytes[2]==0x4E &&
-         bytes[3]==0x47) return true;
+  bool _isValidImage(List<int> bytes) {
+    if (bytes.length < 4) return false;
+    if (bytes[0] == 0xFF && bytes[1] == 0xD8) return true;
+    if (bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47) return true;
+
     return false;
   }
 
-  bool _isValidPDF(List<int> bytes){
-    if(bytes.length<4) return false;
+  bool _isValidPDF(List<int> bytes) {
+    if (bytes.length < 4) return false;
 
-    return bytes[0]==0x25 &&
-      bytes[1]==0x50 &&
-      bytes[2]==0x44 &&
-      bytes[3]==0x46;
+    return bytes[0] == 0x25 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x44 &&
+        bytes[3] == 0x46;
   }
-  
-  Future<void> downloadAttachment(Map<String, dynamic> data, String messageId) async {
+
+  Future<void> downloadAttachment(
+      Map<String, dynamic> data, String messageId) async {
     try {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text("Download started")));
@@ -1223,75 +1283,49 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
       final decryptedContainer =
           await EncryptionService.decryptMessage(encryptedContainer, _aesKey!);
 
-      if(!decryptedContainer.contains("CNG-PAYLOAD") ||
-         !decryptedContainer.contains("-----CNG-PAYLOAD-START-----")||
-         !decryptedContainer.contains("-----CNG_PAYLOAD-END-----")){
+      if (!decryptedContainer.contains("CNG-PAYLOAD") ||
+          !decryptedContainer.contains("-----CNG-PAYLOAD-START-----") ||
+          !decryptedContainer.contains("-----CNG-PAYLOAD-END-----")) {
         throw "Invalid container format";
-         }
-      
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Decryption successful")),
       );
 
-      final mimeType = lookupMimeType(fileName, headerBytes: bytes);
-      
-      if(_isImage(fileName)){
-        if(!_isValidImage(bytes){
-          throw "Invalid image format";
-        }
-        if(mimeType == null || !mimeType.startsWith('image\'')){
-          throw "Invalid image file";
-        }
-        if(bytes.length>5*1024*1024){
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("File size is too large (5MB MAX) for image"),
-                           backgroundColor: Colors.yellow,
-          );
-        }
-      }
-
-      if(fileName.endsWith('.pdf')){
-        if(!_isValidPDF(bytes)){
-          ScaffoldMessenger.of(context).showSnackBar(
-            content: Text("Invalid pdf format"),
-          );
-          return;
-        }
-        if(mimeType ! ='application/pdf' || mimeType == null){
-          ScaffoldMessenger.of(context).showSnackBar(
-            content: Text("Invalid pdf format"),
-          );
-          return;
-        }
-        if(bytes.length>10*10124*1024){
-          ScaffoldMessenger.of(context).showSnackBar(
-            content: Text("File size is too large (10 MB MAX) for pdf"),
-          );
-        }
-      }
-            
-      if(!decryptedContainer.contains('CNG-CONTAINER')){
-        throw "Invalid container format";
-      }
-      
       final payload = decryptedContainer
           .split("-----CNG-PAYLOAD-START-----")[1]
           .split("-----CNG-PAYLOAD-END-----")[0]
           .trim();
 
+      if (data['category'] != 'programming' &&
+          payload.length > 8 * 1024 * 1024) {
+        throw "payload too large";
+      }
+
       print("Downloading file: $fileName");
       print("Category: ${data['category']}");
 
       late List<int> bytes;
-      try{
-      if (data['category'] == "programming") {
-        bytes = utf8.encode(payload);
-      } else {
-        bytes = base64Decode(payload);
+
+      try {
+        if (data['category'] == "programming") {
+          bytes = utf8.encode(payload);
+        } else {
+          bytes = base64Decode(payload);
+        }
+      } catch (e) {
+        throw "Corrupted payload data";
       }
-      }
-      catch(e){
-        throw "Invalid encoding format";
+
+      final computedHash = sha256.convert(bytes).toString();
+
+      if (computedHash != data['hash']) {
+        throw ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("The file is likely tampered"),
+          backgroundColor: Colors.red.shade700,
+          duration: Duration(milliseconds: 600),
+        ));
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1299,30 +1333,57 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
       );
 
       final mimeType = lookupMimeType(fileName, headerBytes: bytes);
-      if(mimeType == null || !mimeType.startsWith("\image")){
-        throw "Invalid mime Type";
-        setState((){
-          _isProcessingFile = false;
-        })
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("The file is found to be malicious and cannot be neutralized, hence Restricted to access"),
-            backgroundColor: Colors.red.shade700,
-            duration: Duration(milliseconds:500),
-          );
-        ),
+
+      if (_isImage(fileName)) {
+        if (!_isValidImage(bytes)) {
+          throw "Invalid image file";
+        }
+
+        if (mimeType == null || !mimeType.startsWith('image/')) {
+          throw "Invalid image file";
+        }
+
+        if (bytes.length > 30 * 1024 * 1024) {
+          throw "Image too large to process safely";
+        }
       }
-      
+
+      if (fileName.endsWith('.pdf')) {
+        if (!_isValidPDF(bytes)) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text("Invalid pdf file")));
+          return;
+        }
+
+        if (mimeType != 'application/pdf' || mimeType == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Invalid PDF file")),
+          );
+          return;
+        }
+      }
+
       final directory = await getApplicationDocumentsDirectory();
       final file = File("${directory.path}/$fileName");
 
       await file.writeAsBytes(bytes);
+      await _generateThumbnail(file);
+
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
             "File Downloaded Successfully",
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           backgroundColor: Colors.blue));
+
+      await FirebaseFirestore.instance
+          .collection('chat_rooms')
+          .doc(chatRoomId)
+          .collection('messages')
+          .doc(messageId)
+          .update({
+        "downloaded": true,
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1332,14 +1393,6 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
         ),
       );
     }
-    await FirebaseFirestore.instance
-    .collection('chat_rooms')
-    .doc(chatRoomId)
-    .collection('messages')
-    .doc(messageId)
-    .update({
-  "downloaded": true,
-  });
   }
 
   String _formatFileSize(int bytes) {
@@ -1514,65 +1567,143 @@ class _IndividualChatPageState extends State<IndividualChatPage> {
   Future<void> sendAttachment() async {
     if (_selectedFile == null || _aesKey == null) return;
 
-    setState(() {
-      _isProcessingFile = true;
-    });
-
     final file = _selectedFile!;
-    final newName = file.name;
-    final fileName = newName.replaceAll(RegExp(r'[^\w\.\-]'), '_');
-    final bytes = file.bytes ?? await File(file.path!).readAsBytes();
+    final risk = _selectedRisk;
 
-    if(file.size>10*1024*1024){
+    List<int> bytes;
+
+    if (_isImage(file.name)) {
+      final compressed = await FlutterImageCompress.compressWithFile(
+        file.path!,
+        quality: 70,
+        minWidth: 1280,
+        minHeight: 1280,
+      );
+
+      if (compressed == null) {
+        throw "Image compression failed";
+      }
+
+      bytes = compressed;
+    } else {
+      bytes = file.bytes ?? await File(file.path!).readAsBytes();
+    }
+
+    if (bytes.isEmpty || bytes.length == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("File is too large MAX(10 MB)",
-                        style: TextStyle(color: Colors.green,
-                                        fontWeight: FontWeight.bold),
-        ),
-          backgroundColor: Colors.yellow,
-          duration: Duration(milliseconds: 300),
-          setState((){
-            _isProcessingFile = false;
-            return;
-          })
-      )
+            content: Text(
+              "File is empty(0 Bytes), kindly recheck before uploading again!",
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.orange),
+      );
+      return;
     }
-        
+
+    if (bytes.length > 30 * 1024 * 1024) {
+      throw ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("PDF too large (max 10MB)")));
+    }
+
+    final newName = file.name;
+    final fileName = newName.replaceAll(RegExp(r'[^\w\.\-]'), '_');
+
+    final mimeType = lookupMimeType(fileName, headerBytes: bytes);
+
+    if (fileName.toLowerCase().endsWith('.jpg')) {
+      if (!_isValidImage(bytes)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Invalid file content",
+              style:
+                  TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: Colors.yellow,
+            duration: Duration(milliseconds: 300),
+          ),
+        );
+        /*setState(() {
+          _isProcessingFile = false;
+        });*/
+        return;
+      }
+      if (mimeType == null || !mimeType.startsWith('image/')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "File format doesn't matches the content's mime",
+              style:
+                  TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: Colors.yellow,
+            duration: Duration(milliseconds: 300),
+          ),
+        );
+        return;
+      }
+    }
+
+    if (fileName.toLowerCase().endsWith('.pdf')) {
+      if (mimeType != 'application/pdf' || !_isValidPDF(bytes)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: const Text("Invalid file format"),
+            backgroundColor: Colors.red,
+            duration: Duration(milliseconds: 500),
+          ),
+        );
+        return;
+      }
+    }
+
+    final hash = sha256.convert(bytes).toString();
+
     final classification = FileClassifier.classify(fileName);
 
-    final container = CngContainerBuilder.buildContainer(
-      originalFileName: fileName,
-      fileBytes: bytes,
-      classification: classification,
-    );
-
-    if(file.size>10*1024*1024){
-      throw "File size is too large";
-    }
-    
-    final encryptedContainer =
-        await EncryptionService.encryptMessage(container, _aesKey!);
-
-    await FirebaseFirestore.instance
-        .collection('chat_rooms')
-        .doc(chatRoomId)
-        .collection('messages')
-        .add({
-      "senderId": FirebaseAuth.instance.currentUser!.uid,
-      "receiverId": widget.receiverUid,
-      "type": "attachment",
-      "payload": encryptedContainer,
-      "category": classification.category.name,
-      "fileName": fileName,
-      "riskLevel": _selectedRisk ?? "low",
-      "neutralized": true,
-      "timestamp": FieldValue.serverTimestamp(),
-    });
-
     setState(() {
+      _isProcessingFile = true;
       _selectedFile = null;
       _selectedRisk = null;
+    });
+
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final localFile = File("${directory.path}/$fileName");
+      await localFile.writeAsBytes(bytes);
+      await _generateThumbnail(localFile);
+
+      final container = CngContainerBuilder.buildContainer(
+        originalFileName: fileName,
+        fileBytes: bytes,
+        classification: classification,
+      );
+
+      final encryptedContainer =
+          await EncryptionService.encryptMessage(container, _aesKey!);
+
+      await FirebaseFirestore.instance
+          .collection('chat_rooms')
+          .doc(chatRoomId)
+          .collection('messages')
+          .add({
+        "senderId": FirebaseAuth.instance.currentUser!.uid,
+        "receiverId": widget.receiverUid,
+        "type": "attachment",
+        "payload": encryptedContainer,
+        "fileName": fileName,
+        "category": classification.category.name,
+        "riskLevel": risk ?? "low",
+        "neutralized": true,
+        "hash": hash,
+        "timestamp": FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Send attachment Error: $e");
+    }
+
+    setState(() {
       _isProcessingFile = false;
     });
   }
@@ -1749,15 +1880,16 @@ class _ConversationScreenState extends State<ConversationScreen> {
     });
 
     bool success = false;
+    //var userData = userDoc.data() as Map<String, dynamic>;
+
     const String statusConnected = 'connected';
     final myUid = FirebaseAuth.instance.currentUser!.uid;
     try {
-      final receiverDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(myUid);
+      final receiverDoc =
+          await FirebaseFirestore.instance.collection('users').doc(myUid);
 
       final receiverDocSnapshot = await receiverDoc.get();
-      
+
       final senderDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(fromUid)
@@ -1781,29 +1913,28 @@ class _ConversationScreenState extends State<ConversationScreen> {
         'peerPublicKey': senderPublicKey,
       }, SetOptions(merge: true));
 
-      if(receiverDocSnapshot.exists()){
-        final receiverData = receiverDocSnapshot.data();
-        if(!receiverData == null || !receiverData.isEmpty()){
-          try{
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(fromUid)
-          .collection('connections')
-          .doc(myUid)
-          .set({
-        'status': statusConnected,
-        'name': receiverData['name'],
-        'targetUid': myUid,
-        'keyType': 'X25519',
-      }, SetOptions(merge: true));
+      try {
+        if (receiverDocSnapshot.exists) {
+          final receiverData = receiverDocSnapshot.data();
 
-      success = true;
-      }
+          if (receiverData != null && receiverData.containsKey('name')) {
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(fromUid)
+                .collection('connections')
+                .doc(myUid)
+                .set({
+              'status': statusConnected,
+              'name': receiverData['name'],
+              'targetUid': myUid,
+              'keyType': 'X25519',
+            }, SetOptions(merge: true));
+          }
         }
+      } catch (e) {
+        print("Error while updating the acceptRequest doc");
       }
-      catch(e){
-        print("Error raised while updating the firebase doc");
-      }
+      success = true;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1859,7 +1990,11 @@ class _ConversationScreenState extends State<ConversationScreen> {
                     .doc(currentUser!.uid)
                     .collection('connections')
                     .doc(targetUid)
-                    .set({'status': 'request_sent', 'targetUid': targetUid});
+                    .set({
+                  'status': 'request_sent',
+                  //'receiverName': userData['name'],
+                  'targetUid': targetUid
+                });
 
                 await FirebaseFirestore.instance
                     .collection('users')
